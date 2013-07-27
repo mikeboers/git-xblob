@@ -1,57 +1,31 @@
 
-- What to name it?
-    git assets
-    git external
-    git ext
-    git xblob (external blob) ***
-    git rblob (remote blob)
 
-- Should the config and links be in the same file, or different ones?
-  - .gitxblobs and .gitxblobconfig ??
-  - if they are seperate, then we can use the git tree format:
+- Config files: .gitxblobconfig
+
+  This is roughly INI style:
+
+    [xblob]
+    geturl = ...
+    puturl = ...
+    encrypted = true
+
+  Walk up from the current directory merging until you are beside .git.
+
+  Use http://docs.python.org/2/library/configparser.html: can likely
+  use the builtin methods to do all the reading.
+
+- Link files: .gitxblobx
+  This is roughtly the git tree format:
       100644 xblob <hash> <path>
-
-- In the future support multiple URLs for different parts of the project,
-  but don't bother for right now.
-
-- File format for both configuration and file hashes.
-
-  - HTML like:
-
-    Content-Type: application/git-xblob
-    Get-URL: http://assets.mikeboers.com/project_name
-    Put-URL: ssh:mikeboers.com:/srv/mikeboers.com/assets/static
-    Hash-Alg: sha1
-
-    <hash> path/to/file
-    <hash> path/to/file
-
-  - INI like
-
-    [xblobconfig]
-    geturl = http://example.com
-    puturl = ssh:example.com/xblob
-
-    [xbloblinks]
-    <hash> = path/to/file
-    <hash> = path/to/file
-
-  - INI and git-tree
-
-    geturl = http://example.com
-    100644 <hash> path/to/file
 
 - Add to .gitignore:
 
-  # git-xblob
+  # git-xblob linked files
   /path/to/a
   /path/to/b
 
-  - Search for r'# git-xblob\n([^\n]+\n)', and replace it with the
+  - Search for r'# git-xblob[^\n]*\n([^\n]+\n)', and replace it with the
     new list. Add it to the end if it cannot be found.
-    
-- Hierarchical configuration: walk up from the current directory until
-  you hit a folder with .git.
 
 - Several upload/download classes:
   - http(s)
@@ -63,29 +37,12 @@
   - They look in `git config` for their secrets if not provided. This allows
     `git xblob init` to ask for the secrets and save them there.
 
-- .gitassetconfig for the values to throw into .git/config when it is
-  initialized
-    
-    - link it into the [include] section in .git/config
-        git config --add include.path ../myconfig
 
-    - example with public downloads
-
-        [assets]
-        geturl = ssh:mikeboers.com:srv/mikeboers.com/assets/project_name
-        puturl = http://assets.mikeboers.com/project_name
-
-    - example with private downloads
-
-        puturl = ssh:mikeboers.com:project_name
-
-
-- Encryption!
+- Encryption
 
   - Files on the server are encrypted.
-  - Files in .git/assets may be encrypted.
-  - Contents of .gitassets may be encrypted.
-  - Either need to encrypt .gitassets, or use hashes of encrypted files.
+  - Files in .git/xblob/objects are encrypted.
+  - .gitxblobs is encrypted.
 
   - This isn't really nessesary if the files are private, and we don't
     care about potential leaks via hash of file contents or file names.

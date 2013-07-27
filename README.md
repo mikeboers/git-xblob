@@ -11,6 +11,5 @@ Installation
 
 ~~~
 git clone https://github.com/mikeboers/git-xblob
-cd git-xblob
-pip install .
+pip install git-xblob
 ~~~
