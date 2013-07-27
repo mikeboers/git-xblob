@@ -1,0 +1,177 @@
+#!/usr/bin/env python
+"""
+Usage: git assets freeze
+       git assets sync
+       git assets upload
+
+"""
+__doc__ = __doc__.strip() + '\n'
+
+
+import errno
+import hashlib
+import os
+import shutil
+import sys
+import urllib
+import zipfile
+from optparse import OptionParser
+from subprocess import call
+
+
+if 'RENDERLOG' not in os.environ:
+    print '$RENDERLOG is not set'
+    exit(1)
+global_asset_dir = os.path.join(os.environ['RENDERLOG'], '.assets')
+
+
+def hash_file(path):
+    hash_ = hashlib.sha1()
+    with open(path, 'rb') as fh:
+        while True:
+            buffer_ = fh.read(8192)
+            if not buffer_:
+                break
+            else:
+                hash_.update(buffer_)
+    return hash_.hexdigest()
+
+
+def load_hashes():
+    hashes = {}
+    if os.path.exists('assets.txt'):
+        for line in open('assets.txt', 'rb'):
+            line = line.strip()
+            if not line:
+                continue
+            hash_, path = line.split(None, 1)
+            hashes[path] = hash_
+    return hashes
+
+
+def dump_hashes(hashes):
+    with open('assets.txt', 'w') as fh:
+        for relpath, hash_ in sorted(hashes.iteritems()):
+            fh.write('%s %s\n' % (hash_, relpath))
+
+
+def main_freeze(args):
+
+    hashes = load_hashes()
+
+    for arg in args:
+        if os.path.isdir(arg):
+            for dir_name, _, file_names in os.walk(arg):
+                for file_name in file_names:
+                    if file_name.startswith('.'):
+                        continue
+                    freeze_one(os.path.join(dir_name, file_name), hashes)
+        else:
+            freeze_one(os.path.abspath(arg), hashes)
+
+    if hashes:
+        dump_hashes(hashes)
+
+
+def freeze_one(path, hashes):
+
+    relpath = os.path.relpath(path)
+    hash_ = hash_file(path)
+    hashes[relpath] = hash_
+
+    print hash_, relpath
+
+    zip_path = os.path.join(global_asset_dir, hash_[:2], hash_ + '.zip')
+    if not os.path.exists(zip_path):
+        try:
+            os.makedirs(os.path.dirname(zip_path))
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                raise
+        zfh = zipfile.ZipFile(zip_path, 'w')
+        zfh.write(path, relpath)
+        zfh.close()
+
+
+def main_sync(args):
+
+    hashes = load_hashes()
+    if not hashes:
+        return
+
+    def report_download_progress(blocks, transfered_bytes, total_bytes):
+        print '%d of %d' % (transfered_bytes, total_bytes)
+
+    for relpath, hash_ in sorted(hashes.iteritems()):
+
+        print hash_, relpath
+
+        zip_path = os.path.join(global_asset_dir, hash_[:2], hash_ + '.zip')
+        if not os.path.exists(zip_path):
+
+            try:
+                os.makedirs(os.path.dirname(zip_path))
+            except OSError as e:
+                if e.errno != errno.EEXIST:
+                    raise
+
+            url = 'http://files.mikeboers.com/renderlog/assets/%s/%s.zip' % (hash_[:2], hash_)
+            print 'Downloding', url
+            urllib.urlretrieve(url, zip_path, report_download_progress)
+
+        zfh = zipfile.ZipFile(zip_path)
+        names = zfh.namelist()
+        if relpath not in names:
+            if len(names) != 1:
+                print 'Too many files in archive'
+                exit(2)
+            name = names[0]
+        else:
+            name = relpath
+        if os.path.splitext(name)[1] != os.path.splitext(relpath)[1]:
+            print 'Warning: Extension does not match: %s <- %s' % (relpath, name)
+
+        try:
+            os.makedirs('.tmp')
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                raise
+
+        zfh.extract(name, '.tmp')
+        zfh.close()
+
+        if os.path.dirname(relpath):
+            try:
+                os.makedirs(os.path.dirname(relpath))
+            except OSError as e:
+                if e.errno != errno.EEXIST:
+                    raise
+
+        shutil.move(os.path.join('.tmp', name), relpath)
+
+
+def main_upload(args):
+    call([
+        'rsync', '-avxP',
+        global_asset_dir + '/',
+        'mikeboers.com:/srv/mikeboers.com/files/renderlog/assets/',
+    ])
+
+
+def main():
+
+    argv = sys.argv[1:]
+    if not argv:
+        print __doc__
+        exit(1)
+
+    handler = globals().get('main_%s' % argv[0])
+    if not handler:
+        print __doc__
+        exit(1)
+
+    exit(handler(argv[1:]) or 0)
+
+
+if __name__ == '__main__':
+    main()
