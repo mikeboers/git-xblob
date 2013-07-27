@@ -1,0 +1,6 @@
+# Build products.
+*.pyc
+/*.egg-info
+
+# Dev and testing.
+/venv
