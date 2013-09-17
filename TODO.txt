@@ -24,6 +24,8 @@
   should return the same content that is already in the repo as long as the hash
   is the same. `git xblob regen` could forcibly regenerate it all.
 
+  `git show HEAD:"hello.txt"` shows the current version of the file.
+
 ---
 
 - Config files: .gitxblobconfig
