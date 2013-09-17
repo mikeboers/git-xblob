@@ -2,12 +2,14 @@ import re
 import sys
 import os
 
-from ..utils import call, git, makedirs, chunked, copy_file_obj
+from ..utils import call, git, makedirs, chunked, copy_file_obj, debug, CallError, stderr
 from ..transports import get_transport
 
 
 def run_smudge(args):
 
+    if args:
+        debug('smudge %s', args[0])
 
     content = sys.stdin.read(1024)
     m = re.match(r'^git-xblob: ([\da-f]+)\s*$', content)
@@ -25,7 +27,12 @@ def run_smudge(args):
     if not os.path.exists(xblob_path):
 
         makedirs(os.path.dirname(xblob_path))
-        get_uri = call('git config xblob.get').strip()
+        
+        try:
+            get_uri = call('git config xblob.get').strip()
+        except CallError:
+            stderr('Please set `git config xblob.get <url>`.')
+            return 1
         transport = get_transport(get_uri)
         transport.get(digest, xblob_path)
 

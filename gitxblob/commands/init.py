@@ -14,7 +14,7 @@ def run_init(args):
         head_exists = False
 
     # Make sure that the working dir is clean.
-    if head_exists:
+    if head_exists and '-f' not in args:
         git_status = git('status -uno --porcelain')
         if git_status.strip():
             print 'Working directory is not clean.'

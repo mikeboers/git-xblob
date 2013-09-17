@@ -24,8 +24,12 @@ def call(command, *args, **kwargs):
         for i, chunk in enumerate(command):
             command[i] = re.sub(r'%s', lambda m: args.pop(0), chunk)
 
-    debug('utils.call: %r', command)
+    # debug('utils.call: %r', command)
+
     return subprocess.check_output(command, **kwargs)
+
+
+CallError = subprocess.CalledProcessError
 
 
 def git(command, *args, **kwargs):
