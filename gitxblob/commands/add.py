@@ -30,7 +30,7 @@ def run_add(paths):
 
         attributes_path = os.path.join(head, '.gitattributes')
         with open(attributes_path, 'a') as fh:
-            fh.write('%s filter=xblob\n' % tail)
+            fh.write('/%s filter=xblob\n' % tail)
 
         # Add the file and the attributes.
         git('add -f %s', attributes_path)

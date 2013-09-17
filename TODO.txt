@@ -1,17 +1,15 @@
 
-- consider adding an encryption key, and then encrypting with pytomcrypt
-    `xblob.encryptionkey abcdef`
-
 - don't add the same path multiple times to .gitattributes
 
-- how to deal with spaces in .gitattributes? The only thing I have found
+- deal with spaces in .gitattributes; the only thing I have found
   is to put a question mark in there (which matches any character).
 
-- `git xblob get <pattern>`
 - `git xblob add --glob` allows patterns instead of names
+- `git xblob add ...` should immediately push the file
 
-- add leading slash to names in .gitattributes so that it refers to
-  specific files
+- class TransportBase(object):
+    def get(digest, dst_path)
+    def put(digest, src_path)
 
 - replace spaces with a question mark, and warn the user
 

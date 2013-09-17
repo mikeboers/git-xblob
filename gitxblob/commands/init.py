@@ -36,6 +36,7 @@ def run_init(args):
     # Install our filters.
     git('config --replace-all filter.xblob.clean "git-xblob clean %f"')
     git('config --replace-all filter.xblob.smudge "git-xblob smudge %f"')
+    git('config --replace-all filter.xblob.required true')
 
     # Force a re-clean.
     if head_exists:

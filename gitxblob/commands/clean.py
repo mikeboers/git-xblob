@@ -5,7 +5,8 @@ import sys
 import os
 import subprocess
 
-from ..utils import git, makedirs, chunked
+from ..utils import call, git, makedirs, chunked
+from ..transports import get_transport
 
 
 def run_clean(args):
@@ -25,6 +26,14 @@ def run_clean(args):
         git_path = git('rev-parse --git-dir').strip()
         xblob_path = os.path.join(git_path, 'xblobs', digest[:2], digest[2:])
         if not os.path.exists(xblob_path):
+
+            # "PUT" it before placing into local xblobs, as we use the existence
+            # in local xblobs to signal existence in remote store.
+
+            put_url = call('git config xblob.put').strip()
+            transport = get_transport(put_url)
+            transport.put(digest, tmp_file.name)
+
             makedirs(os.path.dirname(xblob_path))
             shutil.copyfile(tmp_file.name, xblob_path)
 
