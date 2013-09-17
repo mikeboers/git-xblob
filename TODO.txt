@@ -1,4 +1,30 @@
 
+- consider adding an encryption key, and then encrypting with pytomcrypt
+    `xblob.encryptionkey abcdef`
+
+- don't add the same path multiple times to .gitattributes
+
+- how to deal with spaces in .gitattributes? The only thing I have found
+  is to put a question mark in there (which matches any character).
+
+- `git xblob get <pattern>`
+- `git xblob add --glob` allows patterns instead of names
+
+- add leading slash to names in .gitattributes so that it refers to
+  specific files
+
+- replace spaces with a question mark, and warn the user
+
+- eefactor into packages and modules
+    - Python entrypoint for `git-xblob`
+
+- Switch to "PUTting" files immediately, instead of waiting for a sync.
+
+- Stub files should be allowed to contain any content. On the clean pass, they
+  should return the same content that is already in the repo as long as the hash
+  is the same. `git xblob regen` could forcibly regenerate it all.
+
+---
 
 - Config files: .gitxblobconfig
 
