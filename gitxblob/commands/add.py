@@ -4,7 +4,7 @@ import os
 import re
 from optparse import OptionParser
 
-from ..utils import git
+from ..utils import git, call
 
 
 def bail(code=1):
@@ -42,13 +42,14 @@ def run_add(args):
         # Clean up spaces.
         pattern = re.sub(r'\s', '[[:space:]]', pattern)
         
-        attributes_path = os.path.join(dir_, '.gitattributes')
-        with open(attributes_path, 'a') as fh:
-            fh.write('%s filter=xblob\n' % pattern)
+        if opts.glob or 'filter: xblob' not in call('git check-attr filter %s', path):
 
-        # Add the file and the attributes.
-        git('add -f %s', attributes_path)
+            attributes_path = os.path.join(dir_, '.gitattributes')
+            with open(attributes_path, 'a') as fh:
+                fh.write('%s filter=xblob\n' % pattern)
 
-        if not opts.glob:
-            git('add -f %s', path)
+            git('add -f %s', attributes_path)
+
+            if not opts.glob:
+                git('add -f %s', path)
             

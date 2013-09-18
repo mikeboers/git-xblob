@@ -1,8 +1,6 @@
 
 - swap all `git` calls to `call`
 
-- don't add the same path multiple times to .gitattributes
-
 - `xblob.manual` mode will not autodownload anything, but require a
   `git xblob get [-r] <pattern>`
     - check each to make sure it matches the attributes
