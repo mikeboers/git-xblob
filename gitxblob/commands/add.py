@@ -1,6 +1,7 @@
 """usage: git-xblob add <path> [...]"""
 
 import os
+import re
 
 from ..utils import git
 
@@ -28,6 +29,9 @@ def run_add(paths):
         # Add it to the attributes file.
         head, tail = os.path.split(path)
 
+        # Clean up spaces.
+        tail = re.sub(r'\s', '[[:space:]]', tail)
+        
         attributes_path = os.path.join(head, '.gitattributes')
         with open(attributes_path, 'a') as fh:
             fh.write('/%s filter=xblob\n' % tail)
