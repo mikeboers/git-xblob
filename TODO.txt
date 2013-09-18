@@ -3,12 +3,6 @@
 
 - don't add the same path multiple times to .gitattributes
 
-- deal with spaces in .gitattributes; the only thing I have found
-  is to put a question mark in there (which matches any character, so
-  warn the user about it).
-
-- `git xblob add --glob` allows patterns instead of names
-
 - `xblob.manual` mode will not autodownload anything, but require a
   `git xblob get [-r] <pattern>`
     - check each to make sure it matches the attributes

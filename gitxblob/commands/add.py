@@ -2,6 +2,7 @@
 
 import os
 import re
+from optparse import OptionParser
 
 from ..utils import git
 
@@ -11,32 +12,43 @@ def bail(code=1):
     exit(code)
 
 
-def run_add(paths):
+def run_add(args):
 
-    if not paths:
+    opt_parser = OptionParser()
+    opt_parser.add_option('-g', '--glob', action='store_true')
+    opts, args = opt_parser.parse_args(args)
+
+    if not args:
         bail()
 
-    missing_any = False
-    for path in paths:
-        if not os.path.exists(path):
-            print path, 'does not exist'
-            missing_any = True
-    if missing_any:
-        return 3
+    if not opts.glob:
+        missing_any = False
+        for path in args:
+            if not os.path.exists(path):
+                print path, 'does not exist'
+                missing_any = True
+        if missing_any:
+            return 3
 
-    for path in paths:
+    for path in args:
 
-        # Add it to the attributes file.
-        head, tail = os.path.split(path)
+        if opts.glob:
+            dir_ = ''
+            pattern = path
+        else:
+            dir_, pattern = os.path.split(path)
+            pattern = '/' + pattern
 
         # Clean up spaces.
-        tail = re.sub(r'\s', '[[:space:]]', tail)
+        pattern = re.sub(r'\s', '[[:space:]]', pattern)
         
-        attributes_path = os.path.join(head, '.gitattributes')
+        attributes_path = os.path.join(dir_, '.gitattributes')
         with open(attributes_path, 'a') as fh:
-            fh.write('/%s filter=xblob\n' % tail)
+            fh.write('%s filter=xblob\n' % pattern)
 
         # Add the file and the attributes.
         git('add -f %s', attributes_path)
-        git('add -f %s', path)
-        
+
+        if not opts.glob:
+            git('add -f %s', path)
+            
