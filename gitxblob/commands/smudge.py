@@ -28,9 +28,8 @@ def run_smudge(args):
 
         makedirs(os.path.dirname(xblob_path))
         
-        try:
-            get_uri = call('git config xblob.get').strip()
-        except CallError:
+        get_url = config('xblob.get')
+        if not get_url:
             stderr('Please set `git config xblob.get <url>`.')
             return 1
         transport = get_transport(get_uri)

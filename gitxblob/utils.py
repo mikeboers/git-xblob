@@ -6,11 +6,38 @@ import subprocess
 import sys
 
 
+_config = {}
+
+def config(key, *values):
+    "Memoized git config accessor."
+
+    if not values:
+
+        # From the cache.
+        try:
+            return _config[key]
+        except KeyError:
+            pass
+
+        try:
+            _config[key] = value = call('git config %s', key).strip()
+        except CallError:
+            _config[key] = value = None
+        return value
+
+    else:
+
+        call('git config --replace-all %s %s', key, values[0])
+        _config[key] = values[0]
+
+
 def stderr(*args):
     sys.stderr.write(' '.join(str(x) for x in args) + '\n')
 
 
 def debug(msg, *args):
+    if not config('xblob.debug'):
+        return
     if args:
         msg = msg % args
     sys.stderr.write('git-xblob(%d): %s\n' % (os.getpid(), msg))
@@ -26,7 +53,10 @@ def call(command, *args, **kwargs):
 
     # debug('utils.call: %r', command)
 
-    return subprocess.check_output(command, **kwargs)
+    if 'stdout' in kwargs and kwargs['stdout'] is None:
+        return subprocess.call(command, **kwargs)
+    else:
+        return subprocess.check_output(command, **kwargs)
 
 
 CallError = subprocess.CalledProcessError

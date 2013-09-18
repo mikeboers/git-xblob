@@ -1,6 +1,7 @@
 """
 usage: git xblob init
    or: git xblob add <path> [...]
+   or: git xblob sync
 """
 
 import re

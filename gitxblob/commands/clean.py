@@ -7,6 +7,7 @@ import subprocess
 
 from ..utils import call, git, makedirs, chunked, debug, CallError, stderr
 from ..transports import get_transport
+from .. import synclist
 
 
 def run_clean(args):
@@ -26,19 +27,8 @@ def run_clean(args):
     xblob_path = os.path.join(git_path, 'xblobs', digest[:2], digest[2:])
 
     if src_path is not None and not os.path.exists(xblob_path):
-
-        # "PUT" it before placing into local xblobs, as we use the existence
-        # in local xblobs to signal existence in remote store.
-
-        try:
-            put_url = call('git config xblob.put').strip()
-        except CallError:
-            stderr('Please set `git config xblob.put`.')
-            return 1
-
-        transport = get_transport(put_url)
-        transport.put(digest, src_path)
-
+        stderr('New xblob; remember to `git xblob sync` before pushing.')
+        synclist.append(digest)
         makedirs(os.path.dirname(xblob_path))
         shutil.copyfile(src_path, xblob_path)
 
