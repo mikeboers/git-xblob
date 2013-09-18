@@ -1,10 +1,17 @@
 import os
 import subprocess
+from optparse import OptionParser
 
-from ..utils import git
+from ..utils import git, call, CallError
 
 
 def run_init(args):
+
+    opt_parser = OptionParser()
+    opt_parser.add_option('-g', '--get')
+    opt_parser.add_option('-p', '--put')
+    opt_parser.add_option('-f', '--force')
+    opts, args = opt_parser.parse_args(args)
 
     # Determine if the HEAD exists.
     try:
@@ -14,30 +21,43 @@ def run_init(args):
         head_exists = False
 
     # Make sure that the working dir is clean.
-    if head_exists and '-f' not in args:
+    if head_exists and not opts.force:
         git_status = git('status -uno --porcelain')
         if git_status.strip():
             print 'Working directory is not clean.'
             print 'Please commit or stash your changes before initializing git-xblob.'
             return 2
 
-    # Install user config.
-    top_level = git('rev-parse --show-toplevel').strip()
+    top_level = os.path.abspath(git('rev-parse --show-toplevel').strip())
     config_path = os.path.join(top_level, '.gitxblobconfig')
+
+    # New config options.
+    if opts.get:
+        call('git config -f %s xblob.get %s', config_path, opts.get)
+    if opts.put:
+        call('git config -f %s xblob.put %s', config_path, opts.put)
+
+    # Install user config.
     if os.path.exists(config_path):
-        for line in open(config_path):
-            line = line.strip()
-            if not line:
-                continue
-            git('config ' + line)
+        rel_path = os.path.relpath(config_path, os.path.join(top_level, '.git'))
+        call('git config --add include.path %s', rel_path)
     else:
-        print 'Could not find .gitxblobconfig; skipping.'
+        print 'Could not find .gitxblobconfig.'
+        print 'Be sure to manually configure git-xblob, e.g.:'
+        print '    git config xblob.get http://example.com/path/to/project'
+        print '    git config xblob.put scp:example.com:/var/www/path/to/project'
 
     # Install our filters.
     git('config --replace-all filter.xblob.clean "git-xblob clean %f"')
     git('config --replace-all filter.xblob.smudge "git-xblob smudge %f"')
     git('config --replace-all filter.xblob.required true')
 
+
     # Force a re-clean.
     if head_exists:
-        git('checkout -f HEAD -- %s', top_level)
+        try:
+            get_url = call('git config xblob.get')
+        except CallError:
+            pass
+        else:
+            git('checkout -f HEAD -- %s', top_level)

@@ -2,73 +2,32 @@
 - don't add the same path multiple times to .gitattributes
 
 - deal with spaces in .gitattributes; the only thing I have found
-  is to put a question mark in there (which matches any character).
+  is to put a question mark in there (which matches any character, so
+  warn the user about it).
 
 - `git xblob add --glob` allows patterns instead of names
-- `git xblob add ...` should immediately push the file
 
-- class TransportBase(object):
-    def get(digest, dst_path)
-    def put(digest, src_path)
+- `git xblob init --get <url> --put <url>`: set the urls, and write them
+  to .gitxblobconfig.
 
-- replace spaces with a question mark, and warn the user
-
-- eefactor into packages and modules
-    - Python entrypoint for `git-xblob`
-
-- Switch to "PUTting" files immediately, instead of waiting for a sync.
+- perhaps include the config via `git config --add include.file <include>`.
+  Remember that the path to the include is relative to the master config.
 
 - Stub files should be allowed to contain any content. On the clean pass, they
   should return the same content that is already in the repo as long as the hash
   is the same. `git xblob regen` could forcibly regenerate it all.
 
-  `git show HEAD:"hello.txt"` shows the current version of the file.
+  The stub could look like:
 
----
+    git-xblob f572d396fae9206628714fb2ce00f72e94f2258f
 
-- Config files: .gitxblobconfig
+    This is a stub for a file stored outside of git, created by git-xblob
+    (see: http://github.com/mikeboers/git-xblob).
 
-  This is roughly INI style:
+    You may be able to manually download the file from:
 
-    [xblob]
-    geturl = ...
-    puturl = ...
-    encrypted = true
+    http://example.com/path/to/store/f5/72d396fae9206628714fb2ce00f72e94f2258f
 
-  Walk up from the current directory merging until you are beside .git.
-
-  Use http://docs.python.org/2/library/configparser.html: can likely
-  use the builtin methods to do all the reading.
-
-- Link files: .gitxblobx
-  This is roughtly the git tree format:
-      100644 xblob <hash> <path>
-
-- Add to .gitignore:
-
-  # git-xblob linked files
-  /path/to/a
-  /path/to/b
-
-  - Search for r'# git-xblob[^\n]*\n([^\n]+\n)', and replace it with the
-    new list. Add it to the end if it cannot be found.
-
-- Several upload/download classes:
-  - http(s)
-  - ssh
-  - s3
-  - dropbox (maybe not possible)
-  - files
-
-  - They look in `git config` for their secrets if not provided. This allows
-    `git xblob init` to ask for the secrets and save them there.
+  - `git show HEAD:"hello.txt"` shows the current version of the file.
 
 
-- Encryption
-
-  - Files on the server are encrypted.
-  - Files in .git/xblob/objects are encrypted.
-  - .gitxblobs is encrypted.
-
-  - This isn't really nessesary if the files are private, and we don't
-    care about potential leaks via hash of file contents or file names.
