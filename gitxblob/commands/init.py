@@ -2,7 +2,7 @@ import os
 import subprocess
 from optparse import OptionParser
 
-from ..utils import call, config
+from ..utils import call, config, CallError
 
 
 def run_init(args):
@@ -40,7 +40,10 @@ def run_init(args):
     # Install user config.
     if os.path.exists(config_path):
         rel_path = os.path.relpath(config_path, os.path.join(top_level, '.git'))
-        call('git config --unset-all include.path %s', rel_path)
+        try:
+            call('git config --unset-all include.path %s', rel_path)
+        except CallError:
+            pass
         call('git config --add include.path %s', rel_path)
     else:
         print 'Could not find .gitxblobconfig.'
